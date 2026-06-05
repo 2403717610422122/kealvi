@@ -10,6 +10,8 @@ export default function PollsClient({
   const [polls, setPolls] = useState(initialPolls);
 
   async function vote(optionId: number) {
+    console.log("Clicked option:", optionId);
+
     const res = await fetch("/api/polls/vote", {
       method: "POST",
       headers: {
@@ -17,6 +19,8 @@ export default function PollsClient({
       },
       body: JSON.stringify({ optionId }),
     });
+
+    console.log("Response status:", res.status);
 
     if (res.ok) {
       setPolls((current) =>
@@ -26,12 +30,15 @@ export default function PollsClient({
             option.id === optionId
               ? {
                   ...option,
-                  votes: (option.votes || 0) + 1,
+                  votes: (option.votes ?? 0) + 1,
                 }
               : option
           ),
         }))
       );
+    } else {
+      const error = await res.text();
+      console.error("Vote failed:", error);
     }
   }
 
@@ -52,7 +59,7 @@ export default function PollsClient({
             <button
               key={option.id}
               onClick={() => vote(option.id)}
-              className="block w-full rounded border p-2 mt-2 text-left"
+              className="block w-full rounded border p-2 mt-2 text-left hover:bg-gray-100"
             >
               {option.option_text} ({option.votes ?? 0} votes)
             </button>
