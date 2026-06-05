@@ -16,12 +16,12 @@ export default async function Polls() {
       {polls?.map((poll: any) => {
         const pollOptions =
           options?.filter(
-            (option: any) => option.poll_id === poll.poll_id
+            (option: any) => option.poll_id === poll.id
           ) || [];
 
         return (
           <div
-            key={poll.poll_id}
+            key={poll.id}
             className="rounded-lg border p-4 mb-4"
           >
             <h3 className="font-semibold text-xl">
