@@ -24,7 +24,7 @@ export default async function Polls() {
             key={poll.id}
             className="rounded-lg border p-4 mb-4"
           >
-            <h3 className="font-semibold text-xl">
+            <h3 className="font-semibold text-xl mb-3">
               {poll.question}
             </h3>
 
@@ -33,7 +33,7 @@ export default async function Polls() {
                 key={option.id}
                 className="block w-full rounded border p-2 mt-2 text-left"
               >
-                {option.option_text}
+                {option.option_text} ({option.votes ?? 0} votes)
               </button>
             ))}
           </div>
