@@ -3,38 +3,35 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(
   req: NextRequest,
-  context: any
+  { params }: { params: { id: string } }
 ) {
-  try {
-    const { params } = context;
-    const id = params?.id;
+  const id = params.id;
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "Missing id" },
-        { status: 400 }
-      );
-    }
+  // 1. get current votes
+  const { data, error: fetchError } = await supabase
+    .from("questions")
+    .select("votes")
+    .eq("id", id)
+    .single();
 
-    const { error } = await supabase
-      .from("questions")
-      .update({
-        votes: supabase.sql`votes + 1`,
-      })
-      .eq("id", id);
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+  }
 
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
+  // 2. update incremented value
+  const { error: updateError } = await supabase
+    .from("questions")
+    .update({
+      votes: (data.votes ?? 0) + 1,
+    })
+    .eq("id", id);
 
-    return NextResponse.json({ success: true });
-  } catch (err: any) {
+  if (updateError) {
     return NextResponse.json(
-      { error: err.message },
+      { error: updateError.message },
       { status: 500 }
     );
   }
+
+  return NextResponse.json({ success: true });
 }
