@@ -3,35 +3,52 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
-  const id = params.id;
+  try {
+    const id = context?.params?.id;
 
-  // 1. get current votes
-  const { data, error: fetchError } = await supabase
-    .from("questions")
-    .select("votes")
-    .eq("id", id)
-    .single();
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing id" },
+        { status: 400 }
+      );
+    }
 
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
-  }
+    // get current votes
+    const { data, error: fetchError } = await supabase
+      .from("questions")
+      .select("votes")
+      .eq("id", id)
+      .single();
 
-  // 2. update incremented value
-  const { error: updateError } = await supabase
-    .from("questions")
-    .update({
-      votes: (data.votes ?? 0) + 1,
-    })
-    .eq("id", id);
+    if (fetchError) {
+      return NextResponse.json(
+        { error: fetchError.message },
+        { status: 500 }
+      );
+    }
 
-  if (updateError) {
+    // update votes
+    const { error: updateError } = await supabase
+      .from("questions")
+      .update({
+        votes: (data.votes ?? 0) + 1,
+      })
+      .eq("id", id);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
     return NextResponse.json(
-      { error: updateError.message },
+      { error: err.message },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ success: true });
 }
