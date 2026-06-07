@@ -3,22 +3,41 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
-    const { pollId, optionId } = await req.json();
+    const { optionId } = await req.json();
 
-    const { error } = await supabase.from("votes").insert({
-      question_id: Number(pollId),
-      option_id: Number(optionId),
-      voter_id: "anonymous",
-    });
+    // 1. get current votes
+    const { data, error: fetchError } = await supabase
+      .from("options")
+      .select("votes")
+      .eq("id", optionId)
+      .single();
 
-    if (error) {
+    if (fetchError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: fetchError.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    // 2. increment
+    const newVotes = (data?.votes ?? 0) + 1;
+
+    const { error: updateError } = await supabase
+      .from("options")
+      .update({ votes: newVotes })
+      .eq("id", optionId);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      votes: newVotes,
+    });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message },

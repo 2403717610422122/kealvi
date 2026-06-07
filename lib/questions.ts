@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 export async function getQuestionsPage(offset: number, limit: number) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, body, author, created_at,votes")
+    .select("id, body, author, created_at, votes")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit);
 
@@ -13,10 +13,10 @@ export async function getQuestionsPage(offset: number, limit: number) {
     id: q.id,
     body: q.body,
     author: q.author,
-    votes: 0, // placeholder (no broken join)
+    votes: q.votes ?? 0, // ✅ FIXED (use DB value)
   }));
 
-  const hasMore = rows.length > limit;
+  const hasMore = (data?.length ?? 0) > limit;
 
   return {
     questions: rows.slice(0, limit),
@@ -27,7 +27,7 @@ export async function getQuestionsPage(offset: number, limit: number) {
 export async function searchQuestions(q: string, limit: number) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, body, author, created_at")
+    .select("id, body, author, created_at, votes")
     .textSearch("body", q, { type: "websearch", config: "english" })
     .limit(limit);
 
@@ -37,6 +37,6 @@ export async function searchQuestions(q: string, limit: number) {
     id: row.id,
     body: row.body,
     author: row.author,
-    votes: 0, // placeholder
+    votes: row.votes ?? 0, // ✅ FIXED
   }));
 }
