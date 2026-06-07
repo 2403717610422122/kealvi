@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function POST(
-  req: NextRequest,
-  context: any
-) {
+export async function POST(req: NextRequest, context: any) {
   try {
     const id = context?.params?.id;
 
@@ -15,7 +12,6 @@ export async function POST(
       );
     }
 
-    // get current votes
     const { data, error: fetchError } = await supabase
       .from("questions")
       .select("votes")
@@ -29,7 +25,6 @@ export async function POST(
       );
     }
 
-    // update votes
     const { error: updateError } = await supabase
       .from("questions")
       .update({
