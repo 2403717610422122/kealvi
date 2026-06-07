@@ -5,13 +5,13 @@ export async function POST(req: Request) {
   try {
     const { optionId } = await req.json();
 
-    const { data: option, error } = await supabase
+    const { data: option, error: fetchError } = await supabase
       .from("options")
       .select("votes")
       .eq("id", optionId)
       .single();
 
-    if (error || !option) {
+    if (fetchError || !option) {
       return NextResponse.json(
         { error: "Option not found" },
         { status: 404 }
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       success: true,
       votes: newVotes,
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
