@@ -60,7 +60,7 @@ export default function PollsClient({
             {poll.options.map((option: any) => (
               <button
                 key={option.id}
-                onClick={() => vote(Number(poll.id), Number(option.id))}
+                onClick={() => vote(poll.id, option.id)}
                 className="block w-full rounded border p-2 text-left hover:bg-gray-100"
               >
                 {option.option_text} ({option.votes ?? 0} votes)
