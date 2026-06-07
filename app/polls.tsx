@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import PollsClient from "./polls-client";
 
 export default async function Polls() {
   const { data: polls } = await supabase
@@ -9,38 +10,16 @@ export default async function Polls() {
     .from("options")
     .select("*");
 
+  const pollsWithOptions =
+    polls?.map((poll: any) => ({
+      ...poll,
+      options:
+        options?.filter(
+          (option: any) => option.poll_id === poll.id
+        ) || [],
+    })) || [];
+
   return (
-    <>
-      <h1 className="text-4xl font-bold mb-6">
-        Live Polls
-      </h1>
-
-      {polls?.map((poll: any) => {
-        const pollOptions =
-          options?.filter(
-            (option: any) => option.poll_id === poll.id
-          ) || [];
-
-        return (
-          <div
-            key={poll.id}
-            className="border rounded-xl p-5 mb-5"
-          >
-            <h2 className="text-xl font-semibold mb-4">
-              {poll.question}
-            </h2>
-
-            {pollOptions.map((option: any) => (
-              <button
-                key={option.id}
-                className="w-full border rounded-lg p-3 mb-2 text-left"
-              >
-                {option.option_text}
-              </button>
-            ))}
-          </div>
-        );
-      })}
-    </>
+    <PollsClient initialPolls={pollsWithOptions} />
   );
 }
