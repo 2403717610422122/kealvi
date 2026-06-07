@@ -10,7 +10,7 @@ export default function PollsClient({
   const [polls, setPolls] = useState(initialPolls);
 
   async function vote(optionId: number) {
-    console.log("Clicked option:", optionId);
+    alert(`Voting for option ${optionId}`);
 
     const res = await fetch("/api/polls/vote", {
       method: "POST",
@@ -20,7 +20,7 @@ export default function PollsClient({
       body: JSON.stringify({ optionId }),
     });
 
-    console.log("Response status:", res.status);
+    alert(`Status: ${res.status}`);
 
     if (res.ok) {
       setPolls((current) =>
@@ -38,7 +38,7 @@ export default function PollsClient({
       );
     } else {
       const error = await res.text();
-      console.error("Vote failed:", error);
+      alert(`Error: ${error}`);
     }
   }
 
