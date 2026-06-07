@@ -43,21 +43,28 @@ export default function QuestionsList({
     };
   }, [query]);
 
-  // 🔼 UPVOTE
+  // 🔼 VOTE FUNCTION
   async function upvote(id: string) {
-    // optimistic UI update
+    // optimistic update
     setQuestions((qs: any[]) =>
       qs.map((q) =>
-        q.id === id
-          ? { ...q, votes: (q.votes ?? 0) + 1 }
-          : q
+        q.id === id ? { ...q, votes: (q.votes ?? 0) + 1 } : q
       )
     );
 
     try {
-      await fetch(`/api/questions/${id}/vote`, {
+      const res = await fetch(`/api/questions/${id}/vote`, {
         method: "POST",
       });
+
+      if (!res.ok) {
+        // rollback if failed
+        setQuestions((qs: any[]) =>
+          qs.map((q) =>
+            q.id === id ? { ...q, votes: (q.votes ?? 0) - 1 } : q
+          )
+        );
+      }
     } catch (err) {
       console.error("Vote error:", err);
     }
@@ -66,7 +73,7 @@ export default function QuestionsList({
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
 
-      {/* SEARCH BOX */}
+      {/* SEARCH */}
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -74,27 +81,24 @@ export default function QuestionsList({
         className="w-full border rounded px-3 py-2"
       />
 
-      {/* QUESTIONS LIST */}
+      {/* QUESTIONS */}
       {questions.map((q: any) => (
         <div
           key={q.id}
-          className="flex items-center justify-between gap-4 border p-3 rounded bg-white"
+          className="flex items-center gap-4 border p-3 rounded bg-white"
         >
-          {/* LEFT: VOTE BUTTON */}
+          {/* VOTE BUTTON */}
           <button
             onClick={() => upvote(q.id)}
-            className="px-3 py-1 border rounded font-mono shrink-0 hover:bg-gray-100"
+            className="px-3 py-1 border rounded font-mono hover:bg-gray-100"
           >
             ▲ {q.votes ?? 0}
           </button>
 
-          {/* RIGHT: QUESTION TEXT */}
-          <div className="flex-1 text-left">
-            {q.body}
-          </div>
+          {/* QUESTION */}
+          <div className="flex-1">{q.body}</div>
         </div>
       ))}
-
     </div>
   );
 }
