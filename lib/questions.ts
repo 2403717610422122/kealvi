@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 export async function getQuestionsPage(offset: number, limit: number) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, body, author, created_at")
+    .select("id, body, author, created_at,votes")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit);
 

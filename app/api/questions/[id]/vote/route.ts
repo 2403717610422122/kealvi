@@ -5,7 +5,7 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params; // 🔥 IMPORTANT FIX
+  const { id } = await context.params; // ✅ FIX
 
   console.log("VOTE HIT:", id);
 
@@ -16,7 +16,6 @@ export async function POST(
     );
   }
 
-  // GET current votes
   const { data, error: fetchError } = await supabase
     .from("questions")
     .select("votes")
@@ -30,12 +29,11 @@ export async function POST(
     );
   }
 
-  // UPDATE votes
+  const newVotes = (data?.votes ?? 0) + 1;
+
   const { error: updateError } = await supabase
     .from("questions")
-    .update({
-      votes: (data.votes ?? 0) + 1,
-    })
+    .update({ votes: newVotes })
     .eq("id", id);
 
   if (updateError) {
@@ -45,5 +43,8 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    votes: newVotes,
+  });
 }
