@@ -1,140 +1,100 @@
 "use client";
-import { useState, useEffect } from "react";
-import { getVoterId } from "@/lib/voter";
 
-type Question = {
-  id: string;
-  body: string;
-  author: string | null;
-  votes: number;
-};
+import { useState, useEffect } from "react";
 
 export default function QuestionsList({
   initialQuestions,
   initialHasMore,
-}: {
-  initialQuestions: Question[];
-  initialHasMore: boolean;
-}) {
+}: any) {
   const [questions, setQuestions] = useState(initialQuestions);
-  const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [hasMore, setHasMore] = useState(initialHasMore);
-  const [loading, setLoading] = useState(false);
 
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-
-  // Debounced search: wait 300ms after typing stops; each keystroke cancels
-  // the previous timer, so "deploying" fires one request, not nine.
+  // 🔍 SEARCH
   useEffect(() => {
+    const controller = new AbortController();
+
     const id = setTimeout(async () => {
-      const url = query
-        ? `/api/questions?q=${encodeURIComponent(query)}`
-        : `/api/questions`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setQuestions(data.questions);
-      setHasMore(data.hasMore);
+      try {
+        const url = query
+          ? `/api/questions?q=${encodeURIComponent(query)}`
+          : `/api/questions`;
+
+        const res = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        setQuestions(data.questions || []);
+        setHasMore(data.hasMore ?? false);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Fetch error:", err);
+        }
+      }
     }, 300);
 
-    return () => clearTimeout(id); // cancel the pending timer on each keystroke
+    return () => {
+      clearTimeout(id);
+      controller.abort();
+    };
   }, [query]);
 
-  async function submit() {
-    if (!draft.trim()) return;
-
-    const res = await fetch("/api/questions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: draft }),
-    });
-    const created = await res.json();
-
-    setQuestions((qs) => [{ ...created, votes: 0 }, ...qs]);
-    setDraft("");
-  }
-
+  // 🔼 UPVOTE
   async function upvote(id: string) {
-    // optimistic: assume success, update the UI now
-    setQuestions((qs) =>
-      qs.map((q) => (q.id === id ? { ...q, votes: q.votes + 1 } : q))
+    // optimistic UI update
+    setQuestions((qs: any[]) =>
+      qs.map((q) =>
+        q.id === id
+          ? { ...q, votes: (q.votes ?? 0) + 1 }
+          : q
+      )
     );
 
-    const res = await fetch(`/api/questions/${id}/vote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voterId: getVoterId() }),
-    });
-
-    // server said no (already voted) — roll back
-    if (!res.ok) {
-      setQuestions((qs) =>
-        qs.map((q) => (q.id === id ? { ...q, votes: q.votes - 1 } : q))
-      );
+    try {
+      await fetch(`/api/questions/${id}/vote`, {
+        method: "POST",
+      });
+    } catch (err) {
+      console.error("Vote error:", err);
     }
   }
 
-  async function loadMore() {
-    setLoading(true);
-    const res = await fetch(`/api/questions?offset=${questions.length}`);
-    const data = await res.json();
-    setQuestions((qs) => [...qs, ...data.questions]);
-    setHasMore(data.hasMore);
-    setLoading(false);
-  }
-
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        {hydrated ? "Interactive ✓" : "Loading interactivity…"}
-      </p>
+    <div className="space-y-4 max-w-2xl mx-auto">
 
-      <div className="flex gap-2">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask a question…"
-          className="flex-1 rounded-md border px-3 py-2"
-        />
-        <button onClick={submit} className="rounded-md border px-4 py-2">
-          Ask
-        </button>
-      </div>
-
+      {/* SEARCH BOX */}
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search questions…"
-        className="w-full rounded-md border px-3 py-2"
+        placeholder="Search questions..."
+        className="w-full border rounded px-3 py-2"
       />
 
-      <ul className="space-y-3">
-        {questions.map((q) => (
-          <li
-            key={q.id}
-            className="flex items-center gap-3 rounded-lg border p-3"
-          >
-            <button
-              onClick={() => upvote(q.id)}
-              className="rounded-md border px-3 py-1 font-mono"
-            >
-              ▲ {q.votes}
-            </button>
-            <span>{q.body}</span>
-          </li>
-        ))}
-      </ul>
-
-      {hasMore && (
-        <button
-          onClick={loadMore}
-          disabled={loading}
-          className="rounded-md border px-4 py-2 disabled:opacity-50"
+      {/* QUESTIONS LIST */}
+      {questions.map((q: any) => (
+        <div
+          key={q.id}
+          className="flex items-center justify-between gap-4 border p-3 rounded bg-white"
         >
-          {loading ? "Loading…" : "Load more"}
-        </button>
-      )}
+          {/* LEFT: VOTE BUTTON */}
+          <button
+            onClick={() => upvote(q.id)}
+            className="px-3 py-1 border rounded font-mono shrink-0 hover:bg-gray-100"
+          >
+            ▲ {q.votes ?? 0}
+          </button>
+
+          {/* RIGHT: QUESTION TEXT */}
+          <div className="flex-1 text-left">
+            {q.body}
+          </div>
+        </div>
+      ))}
+
     </div>
   );
 }

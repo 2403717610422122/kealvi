@@ -1,41 +1,22 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function POST(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
 
-    const body = await req.json();
-    const { option_id } = body;
+  const { error } = await supabase.rpc("increment_votes", {
+    row_id: id,
+  });
 
-    if (!id || !option_id) {
-      return NextResponse.json(
-        { error: "Missing data" },
-        { status: 400 }
-      );
-    }
-
-    const { error } = await supabase.from("votes").insert({
-      poll_id: Number(id),
-      option_id,
-    });
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    // ✅ IMPORTANT: return expected type
-    return NextResponse.json({
-      id: String(id),
-    });
-  } catch (err) {
+  if (error) {
     return NextResponse.json(
-      { error: "Server error" },
+      { error: error.message },
       { status: 500 }
     );
   }
+
+  return NextResponse.json({ success: true });
 }

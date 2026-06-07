@@ -3,26 +3,25 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    const { poll_id, option_id } = body;
+    const { pollId, optionId } = await req.json();
 
     const { error } = await supabase.from("votes").insert({
-      poll_id,
-      option_id,
+      question_id: Number(pollId),
+      option_id: Number(optionId),
+      voter_id: "anonymous",
     });
 
     if (error) {
       return NextResponse.json(
         { error: error.message },
-        { status: 400 }
+        { status: 500 }
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json(
-      { error: "Server error" },
+      { error: err.message },
       { status: 500 }
     );
   }

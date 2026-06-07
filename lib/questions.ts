@@ -3,36 +3,40 @@ import { supabase } from "@/lib/supabase";
 export async function getQuestionsPage(offset: number, limit: number) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, body, author, created_at, votes(count)")
+    .select("id, body, author, created_at")
     .order("created_at", { ascending: false })
-    .range(offset, offset + limit); // inclusive → asks for limit + 1 rows
+    .range(offset, offset + limit);
 
   if (error) throw new Error(error.message);
 
-  const rows = (data ?? []).map((q) => ({
+  const rows = (data ?? []).map((q: any) => ({
     id: q.id,
     body: q.body,
     author: q.author,
-    votes: q.votes?.[0]?.count ?? 0,
+    votes: 0, // placeholder (no broken join)
   }));
 
-  const hasMore = rows.length > limit; // got the extra row? there's a next page
-  return { questions: rows.slice(0, limit), hasMore };
+  const hasMore = rows.length > limit;
+
+  return {
+    questions: rows.slice(0, limit),
+    hasMore,
+  };
 }
 
 export async function searchQuestions(q: string, limit: number) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, body, author, created_at, votes(count)")
+    .select("id, body, author, created_at")
     .textSearch("body", q, { type: "websearch", config: "english" })
     .limit(limit);
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((row) => ({
+  return (data ?? []).map((row: any) => ({
     id: row.id,
     body: row.body,
     author: row.author,
-    votes: row.votes?.[0]?.count ?? 0,
+    votes: 0, // placeholder
   }));
 }
