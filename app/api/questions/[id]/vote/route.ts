@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function POST(req: NextRequest, context: any) {
-  const id = context?.params?.id;
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params; // 🔥 IMPORTANT FIX
 
-  console.log("VOTE API HIT:", id);
+  console.log("VOTE HIT:", id);
 
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing id" },
+      { status: 400 }
+    );
   }
 
-  // get current votes
+  // GET current votes
   const { data, error: fetchError } = await supabase
     .from("questions")
     .select("votes")
@@ -24,7 +30,7 @@ export async function POST(req: NextRequest, context: any) {
     );
   }
 
-  // update votes
+  // UPDATE votes
   const { error: updateError } = await supabase
     .from("questions")
     .update({
