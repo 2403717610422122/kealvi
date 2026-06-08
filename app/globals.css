@@ -1,25 +1,55 @@
-html{
-    font-size: 125%;
+html {
+  font-size: 125%;
 }
+
+/* 🌈 GLOBAL BACKGROUND (purple + white theme) */
 body {
   font-size: 20px;
   font-family: Arial, sans-serif;
+
+  /* soft purple gradient background */
+  background: linear-gradient(
+    135deg,
+    #f5f3ff 0%,
+    #ffffff 50%,
+    #ede9fe 100%
+  );
+
+  min-height: 100vh;
+  margin: 0;
+  color: #1f2937; /* dark gray text */
 }
 
+/* 🧠 HEADINGS */
 h1 {
   font-size: 48px;
+  color: #5b21b6; /* deep purple */
 }
 
 h2 {
   font-size: 36px;
+  color: #6d28d9;
 }
 
+/* ✍️ INPUTS */
 input,
 button {
   font-size: 18px;
   padding: 8px 12px;
+  border-radius: 8px;
 }
 
+/* 📋 LIST ITEMS */
 li {
   font-size: 20px;
+}
+
+/* ✨ OPTIONAL: nicer buttons globally */
+button {
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
 }
